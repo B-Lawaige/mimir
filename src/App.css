@@ -1,0 +1,68 @@
+#root {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.game {
+  width: min(100%, 720px);
+  padding: clamp(1.25rem, 5vw, 2.5rem);
+  border: 1px solid #334155;
+  border-radius: 1.5rem;
+  background: #1e293b;
+  box-shadow: 0 1.5rem 4rem #02061780;
+  text-align: center;
+}
+
+.game h1 {
+  margin-top: 0;
+  color: #f8fafc;
+}
+
+.game p {
+  color: #cbd5e1;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.card {
+  aspect-ratio: 1;
+  border: 2px solid #475569;
+  border-radius: 1rem;
+  background: #334155;
+  color: #f8fafc;
+  cursor: pointer;
+  font-size: clamp(1.5rem, 6vw, 2.5rem);
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  background: #475569;
+}
+
+.card--matched {
+  border-color: #34d399;
+  background: #064e3b;
+  cursor: default;
+}
+
+.card:focus-visible,
+.game button:focus-visible {
+  outline: 3px solid #fbbf24;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
