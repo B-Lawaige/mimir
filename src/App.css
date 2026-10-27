@@ -1,68 +1,479 @@
 #root {
   min-height: 100vh;
+}
+
+.mimir-app {
+  position: relative;
+  isolation: isolate;
   display: grid;
+  min-height: 100vh;
   place-items: center;
-  padding: 1rem;
+  overflow: hidden;
+  padding: clamp(1rem, 4vw, 3rem);
+  background:
+    radial-gradient(ellipse at 50% 66%, #1c3e69 0%, #13284a 25%, transparent 62%),
+    radial-gradient(ellipse at 52% 38%, #162948 0%, transparent 55%),
+    linear-gradient(180deg, #060d1b 0%, #0c1930 48%, #091426 100%);
+  color: #e8e4d8;
 }
 
-.game {
-  width: min(100%, 720px);
-  padding: clamp(1.25rem, 5vw, 2.5rem);
-  border: 1px solid #334155;
-  border-radius: 1.5rem;
-  background: #1e293b;
-  box-shadow: 0 1.5rem 4rem #02061780;
+.mimir-app--game {
+  min-height: 100vh;
+  padding: 0;
+  overflow: auto;
+}
+
+.particle-field {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  top: var(--particle-top);
+  left: var(--particle-left);
+  width: var(--particle-size);
+  height: var(--particle-size);
+  border-radius: 50%;
+  background: #a9d8ff;
+  box-shadow: 0 0 10px 2px #75bfff99;
+  opacity: 0;
+  animation: drift var(--particle-duration) var(--particle-delay) ease-in-out infinite;
+}
+
+@keyframes drift {
+  0%, 100% {
+    opacity: 0.12;
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    opacity: 0.75;
+    transform: translate3d(12px, -24px, 0);
+  }
+}
+
+.menu-panel,
+.secondary-panel,
+.game-panel {
+  width: min(100%, 56rem);
+  padding: clamp(1.5rem, 5vw, 3.5rem);
+  border: 1px solid #cbb66b54;
+  border-radius: 1.25rem;
+  background: linear-gradient(150deg, #101e34ed, #0b1528f2);
+  box-shadow: 0 1.5rem 5rem #02071180, inset 0 0 36px #bccce20b;
   text-align: center;
+  backdrop-filter: blur(8px);
 }
 
-.game h1 {
-  margin-top: 0;
-  color: #f8fafc;
+.menu-panel {
+  display: flex;
+  width: 100%;
+  min-height: min(100vh, 56rem);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: 2rem 1rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
-.game p {
-  color: #cbd5e1;
+.eyebrow {
+  margin: 0;
+  color: #cbb66b;
+  font-size: 0.78rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.game-title,
+.secondary-panel h1,
+.game-header h1 {
+  margin: 0.25rem 0 0;
+  color: #f0dfaa;
+  font-family: "Cinzel", "Times New Roman", serif;
+  font-size: clamp(3.8rem, 13vw, 7rem);
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  line-height: 1.1;
+  text-shadow: 0 0 14px #d6bd7770, 0 0 45px #96b5e630;
+}
+
+.menu-panel .game-title {
+  margin: 0;
+  color: #fff;
+  font-family: "Cormorant SC", "Times New Roman", serif;
+  font-size: clamp(4.5rem, 14vw, 8.5rem);
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  line-height: 0.95;
+}
+
+.main-menu {
+  display: grid;
+  justify-items: center;
+  gap: clamp(0.15rem, 1vh, 0.65rem);
+  width: min(100%, 22rem);
+}
+
+.menu-item {
+  position: relative;
+  width: 100%;
+  padding: 0.5rem 2.5rem;
+  border: 0;
+  background: transparent;
+  color: #e2e8f2;
+  cursor: pointer;
+  font-family: "Cormorant SC", "Times New Roman", serif;
+  font-size: clamp(1.1rem, 3vw, 1.45rem);
+  font-variant: small-caps;
+  letter-spacing: 0.09em;
+  text-shadow: 0 1px 5px #030816;
+  transition: color 180ms ease, text-shadow 180ms ease, transform 180ms ease;
+}
+
+.menu-item:hover,
+.menu-item--active {
+  color: #fff;
+  text-shadow: 0 0 10px #dceaff, 0 0 22px #acd1ff99;
+  transform: scale(1.035);
+}
+
+.menu-best-score,
+.game-best-score {
+  margin: 0;
+  padding-top: 0;
+  color: #b7c8df;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+}
+
+.secondary-panel {
+  width: min(100%, 36rem);
+}
+
+.secondary-panel h1 {
+  margin-block: 0.6rem 1rem;
+  font-size: clamp(2.4rem, 8vw, 4rem);
+  letter-spacing: 0.08em;
+}
+
+.secondary-panel p,
+.game-panel > p {
+  color: #c4cfde;
+  line-height: 1.7;
+}
+
+.score-display {
+  color: #f0dfaa !important;
+  font-family: "Cinzel", "Times New Roman", serif;
+  font-size: 2.5rem;
+}
+
+.back-button {
+  min-height: 2.8rem;
+  padding: 0.65rem 1.25rem;
+  border: 1px solid #cbb66b8c;
+  border-radius: 0.4rem;
+  background: #182844;
+  color: #f0dfaa;
+  cursor: pointer;
+  font-family: "Cinzel", "Times New Roman", serif;
+  letter-spacing: 0.04em;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.back-button:hover {
+  border-color: #edda9c;
+  background: #243856;
+}
+
+.game-panel {
+  width: min(100%, 58rem);
+}
+
+.mimir-app--game .game-panel {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: clamp(0.5rem, 1.5vh, 1.25rem) clamp(0.5rem, 2vw, 1.5rem);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  text-align: left;
+}
+
+.mimir-app--game .game-header {
+  width: min(100%, 75rem);
+}
+
+.game-header h1 {
+  font-size: clamp(2.25rem, 7vw, 4rem);
+  letter-spacing: 0.12em;
+}
+
+.game-hud {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.game-hud p {
+  margin: 0;
+  color: #e4d59e;
+}
+
+.game-message {
+  margin: 1.25rem 0;
+  color: #f0dfaa;
 }
 
 .board {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
-  gap: 0.75rem;
-  margin-top: 1.5rem;
+  grid-template-columns: repeat(var(--board-columns), var(--card-size));
+  grid-auto-rows: var(--card-size);
+  align-content: center;
+  justify-content: center;
+  gap: var(--card-gap);
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+  margin: 0 auto;
 }
 
 .card {
-  aspect-ratio: 1;
-  border: 2px solid #475569;
-  border-radius: 1rem;
-  background: #334155;
-  color: #f8fafc;
+  display: grid;
+  width: var(--card-size);
+  height: var(--card-size);
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
+  border: 1px solid #cbb66b8c;
+  border-radius: 0.75rem;
+  background: linear-gradient(145deg, #203552, #101c30);
+  box-shadow: inset 0 0 1rem #c6d5e00d, 0 0 0.8rem #94b5df0c;
+  color: #e7d28e;
   cursor: pointer;
   font-size: clamp(1.5rem, 6vw, 2.5rem);
-  transition: transform 160ms ease, background-color 160ms ease;
+  transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
 }
 
-.card:hover {
-  transform: translateY(-3px);
-  background: #475569;
+.card-icon {
+  display: block;
+  width: 58%;
+  height: 58%;
+  margin: auto;
+  object-fit: contain;
+  filter: brightness(0) invert(0.9) sepia(0.12) saturate(0.7);
+}
+
+.card:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 0 1rem #d4bd6b40;
 }
 
 .card--matched {
-  border-color: #34d399;
-  background: #064e3b;
+  border-color: #8fc5b2;
+  background: linear-gradient(145deg, #244c50, #142d3b);
+  box-shadow: inset 0 0 1rem #a4d5ba1a, 0 0 0.8rem #8fc5b240;
   cursor: default;
 }
 
-.card:focus-visible,
-.game button:focus-visible {
-  outline: 3px solid #fbbf24;
-  outline-offset: 3px;
+.mimir-app button:focus-visible {
+  outline: 2px solid #f0dfaa;
+  outline-offset: 4px;
+}
+
+.audio-error {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 3;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e8a7a7;
+  border-radius: 0.5rem;
+  background: #28151df2;
+  color: #ffe3e3;
+  text-align: center;
+}
+
+.setting-row {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1.25rem 0;
+  color: #e4d59e;
+  text-align: left;
+}
+
+.setting-row input[type="range"] {
+  width: 100%;
+  accent-color: #d7bd70;
+}
+
+.setting-row select {
+  min-height: 2.5rem;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid #cbb66b8c;
+  border-radius: 0.35rem;
+  background: #101e34;
+  color: #f0dfaa;
+  font: inherit;
+}
+
+.options-panel .back-button,
+.end-dialog .back-button {
+  margin: 0.4rem;
+}
+
+.end-dialog-backdrop {
+  position: fixed;
+  z-index: 5;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: #020711b8;
+  backdrop-filter: blur(5px);
+}
+
+.end-dialog {
+  width: min(100%, 28rem);
+  padding: clamp(1.5rem, 5vw, 2.5rem);
+  border: 1px solid #cbb66b8c;
+  border-radius: 1rem;
+  background: linear-gradient(150deg, #162743, #0b1528);
+  box-shadow: 0 1.5rem 5rem #020711c9;
+  text-align: center;
+}
+
+.end-dialog h2 {
+  color: #f0dfaa;
+  font-family: "Cinzel", "Times New Roman", serif;
+  font-weight: 500;
+}
+
+.end-dialog p {
+  color: #c4cfde;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  z-index: 4;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: #020711b8;
+  backdrop-filter: blur(5px);
+}
+
+.game-dialog {
+  width: min(100%, 30rem);
+  padding: clamp(1.5rem, 5vw, 2.5rem);
+  border: 1px solid #cbb66b8c;
+  border-radius: 1rem;
+  background: linear-gradient(150deg, #162743, #0b1528);
+  box-shadow: 0 1.5rem 5rem #020711c9;
+  text-align: center;
+}
+
+.game-dialog h2 {
+  margin-top: 0;
+  color: #f0dfaa;
+}
+
+.pact-dialog {
+  width: min(100%, 48rem);
+  max-height: min(90vh, 52rem);
+  overflow: auto;
+}
+
+.pact-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+}
+
+.pact-option {
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+  min-height: 7rem;
+  padding: 0.9rem;
+  border: 1px solid #cbb66b69;
+  border-radius: 0.65rem;
+  background: #14243b;
+  color: #dce5f1;
+  cursor: pointer;
+  text-align: left;
+}
+
+.pact-option:hover {
+  border-color: #efdc9c;
+  background: #203754;
+}
+
+.pact-option strong {
+  color: #f0dfaa;
+}
+
+.pact-option span {
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 520px) {
+  .menu-panel {
+    min-height: calc(100vh - 2rem);
+    justify-content: center;
+  }
+
+  .menu-item {
+    padding-block: 0.62rem;
+  }
+
+  .game-header {
+    align-items: flex-start;
+  }
+
+  .game-header .back-button {
+    padding-inline: 0.8rem;
+  }
+
+  .mimir-app--game .game-header {
+    width: 100%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }

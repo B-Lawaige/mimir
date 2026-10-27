@@ -1,0 +1,51 @@
+.menu {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5rem;
+  text-align: center;
+  color: #fff;
+
+  /* Fond sombre. Pour une image ou un GIF, décommente la ligne du dessous
+     et mets le fichier dans le dossier public/ (ex. public/fond-menu.gif) :
+     background-image: url('./fond-menu.gif'); */
+  background-color: #060d1a;
+  background-size: cover;
+  background-position: center;
+}
+
+.menu__title {
+  margin: 0;
+  font-size: clamp(4rem, 14vw, 9rem);
+  font-weight: 400;
+  line-height: 1;
+  color: #fff;
+}
+
+.menu__list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* On enlève tout le style par défaut des boutons : il ne reste que du texte */
+.menu__list button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: #fff;
+  font: inherit;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.menu__best {
+  margin: 0;
+  color: #fff;
+  font-size: 1.1rem;
+}

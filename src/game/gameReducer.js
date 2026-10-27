@@ -1,6 +1,7 @@
 import { MAX_LEVEL } from './levels.js'
+import { maxErrorsForLevel } from './errors.js'
+import { defaultModifiers, modifiersForPact } from './pacts.js'
 
-export const MAX_ERRORS = 4
 export const POINTS_PER_PAIR = 100
 export const LEVEL_COMPLETION_BONUS = 50
 
@@ -12,6 +13,10 @@ export function createInitialGameState() {
     flippedIds: [],
     errors: 0,
     score: 0,
+    modifiers: defaultModifiers(1),
+    pact: null,
+    pactOptions: [],
+    timeRemaining: null,
   }
 }
 
@@ -21,6 +26,7 @@ export function gameReducer(state, action) {
       return {
         ...createInitialGameState(),
         status: 'playing',
+        modifiers: defaultModifiers(1),
         cards: action.cards.map((card) => ({
           ...card,
           isFlipped: false,
@@ -74,7 +80,12 @@ export function gameReducer(state, action) {
       )
       const completesLevel = cards.every((card) => card.isMatched)
       const bonus = completesLevel
-        ? LEVEL_COMPLETION_BONUS * (MAX_ERRORS - state.errors)
+        ? LEVEL_COMPLETION_BONUS *
+          Math.max(
+            0,
+            (state.modifiers.maxErrors ??
+              maxErrorsForLevel(state.level)) - state.errors
+          )
         : 0
 
       return {
@@ -86,7 +97,9 @@ export function gameReducer(state, action) {
           : 'playing',
         cards,
         flippedIds: [],
-        score: state.score + POINTS_PER_PAIR + bonus,
+        score:
+          state.score +
+          Math.round((POINTS_PER_PAIR + bonus) * state.modifiers.scoreMultiplier),
       }
     }
 
@@ -97,24 +110,47 @@ export function gameReducer(state, action) {
 
       return {
         ...state,
-        status: state.errors >= MAX_ERRORS ? 'gameOver' : 'playing',
-        cards: state.cards.map((card) =>
-          state.flippedIds.includes(card.id) && !card.isMatched
-            ? { ...card, isFlipped: false }
-            : card
-        ),
+        status:
+        (state.modifiers.maxErrors !== null &&
+        state.errors >= state.modifiers.maxErrors)
+          ? 'gameOver'
+          : 'playing',
+        cards: action.cards
+          ? action.cards.map((card) => ({
+              ...card,
+              isFlipped: card.isMatched,
+            }))
+          : state.cards.map((card) =>
+              state.flippedIds.includes(card.id) && !card.isMatched
+                ? { ...card, isFlipped: false }
+                : card
+            ),
         flippedIds: [],
       }
 
-    case 'NEXT_LEVEL':
+    case 'NEXT_LEVEL': {
       if (state.status !== 'levelComplete' || state.level >= MAX_LEVEL) {
         return state
+      }
+
+      const nextLevel = state.level + 1
+      if (nextLevel >= 5) {
+        return {
+          ...state,
+          status: 'choosingPact',
+          level: nextLevel,
+          errors: 0,
+          pactOptions: action.pacts ?? [],
+          pact: null,
+          modifiers: defaultModifiers(nextLevel),
+          timeRemaining: null,
+        }
       }
 
       return {
         ...state,
         status: 'playing',
-        level: state.level + 1,
+        level: nextLevel,
         cards: action.cards.map((card) => ({
           ...card,
           isFlipped: false,
@@ -122,6 +158,63 @@ export function gameReducer(state, action) {
         })),
         flippedIds: [],
         errors: 0,
+        pact: null,
+        modifiers: defaultModifiers(nextLevel),
+        timeRemaining: null,
+      }
+    }
+
+    case 'CHOOSE_PACT': {
+      if (state.status !== 'choosingPact') {
+        return state
+      }
+
+      const pact =
+        action.pactId === null
+          ? null
+          : state.pactOptions.find((option) => option.id === action.pactId) ?? null
+      const modifiers = modifiersForPact(state.level, pact)
+      const previewIds = modifiers.previewFraction
+        ? action.previewIds ?? []
+        : []
+
+      return {
+        ...state,
+        status: previewIds.length ? 'preview' : 'playing',
+        cards: action.cards.map((card) => ({
+          ...card,
+          isFlipped: previewIds.includes(card.id),
+          isMatched: false,
+        })),
+        flippedIds: [],
+        errors: 0,
+        pact,
+        modifiers,
+        timeRemaining: modifiers.timeLimitSeconds || null,
+      }
+    }
+
+    case 'PREVIEW_COMPLETE':
+      if (state.status !== 'preview') return state
+      return {
+        ...state,
+        status: 'playing',
+        cards: state.cards.map((card) =>
+          card.isMatched ? card : { ...card, isFlipped: false }
+        ),
+      }
+
+    case 'TIME_EXPIRED':
+      if (state.status !== 'playing' || !state.timeRemaining) return state
+      return {
+        ...state,
+        errors: state.errors + 1,
+        timeRemaining: null,
+        status:
+          state.modifiers.maxErrors !== null &&
+          state.errors + 1 >= state.modifiers.maxErrors
+            ? 'gameOver'
+            : 'playing',
       }
 
     default:
