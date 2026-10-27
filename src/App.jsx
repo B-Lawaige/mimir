@@ -1,21 +1,5 @@
 import { useState, useEffect} from 'react'
-
-  const symbols = [
-  '🍎', '🍋', '🍇', '🍊', '🍓', '🍒',
-  '🍉', '🍍', '🥝', '🥑', '🥕', '🌽',
-]
-
-  const MAX_LEVEL = 10
-  const MAX_PAIRS = 12
-
-  function createDeck(level) {
-  const pairCount = Math.min(3 + level - 1, MAX_PAIRS)
-
-  return symbols.slice(0, pairCount).flatMap((symbol, index) => [
-    { id: `level-${level}-pair-${index}-a`, symbol },
-    { id: `level-${level}-pair-${index}-b`, symbol },
-  ])
-}
+import { createDeck, MAX_LEVEL } from './game/levels.js'
 
   function shuffleCards(cardsToShuffle) {
   const shuffledCards = [...cardsToShuffle]
@@ -50,6 +34,13 @@ function App() {
   const [isGameOver, setIsGameOver] = useState(false)
 
   const [score, setScore] = useState(0)
+
+  const [bestScore, setBestScore] = useState(() => {
+  const savedScore = Number(
+    window.localStorage.getItem('memory-best-score')
+  )
+  return Number.isFinite(savedScore) ? savedScore : 0
+  })
 
   const [isWon, setIsWon] = useState(false)
 
@@ -165,7 +156,7 @@ function App() {
     if (flippedIds.length !== 2) {
       return
     }
-  
+
     const timeoutId = window.setTimeout(() => {
       setCards((currentCards) =>
         currentCards.map((card) =>
@@ -180,6 +171,15 @@ function App() {
     return () => window.clearTimeout(timeoutId)
   }, [flippedIds])
 
+  useEffect(() => {
+  if ((!isGameOver && !isWon) || score <= bestScore) {
+    return
+  }
+
+  setBestScore(score)
+  window.localStorage.setItem('memory-best-score', String(score))
+}, [isGameOver, isWon, score, bestScore])
+
   return (
     <main className="game">
       <h1>Memory</h1>
@@ -189,6 +189,7 @@ function App() {
       </button>
       {isPlaying && <p>Niveau : {level} / {MAX_LEVEL}</p>}
       {isPlaying && <p>Score : {score}</p>}
+      <p>Meilleur score : {bestScore}</p>
       {isPlaying && <p>Erreurs : {errors} / 4</p>}
       {isGameOver && <p>Partie terminée !</p>}
       {isWon && <p>Bravo, tu as trouvé toutes les paires !</p>}
