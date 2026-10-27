@@ -1,7 +1,8 @@
-import { useState, useEffect} from 'react'
+import { useEffect, useReducer, useState } from 'react'
 import { createDeck, MAX_LEVEL } from './game/levels.js'
+import { createInitialGameState, gameReducer } from './game/gameReducer.js'
 
-  function shuffleCards(cardsToShuffle) {
+function shuffleCards(cardsToShuffle) {
   const shuffledCards = [...cardsToShuffle]
 
   for (let index = shuffledCards.length - 1; index > 0; index--) {
@@ -12,173 +13,60 @@ import { createDeck, MAX_LEVEL } from './game/levels.js'
     ]
   }
 
-  return shuffledCards.map((card) => ({
-    ...card,
-    isFlipped: false,
-    isMatched: false,
-  }))
+  return shuffledCards
 }
 
 function App() {
-
-  const [isPlaying, setIsPlaying] = useState(false)
-
-  const [cards, setCards] = useState(() => shuffleCards(createDeck(1)))
-
-  const [level, setLevel] = useState(1)
-
-  const [flippedIds, setFlippedIds] = useState([])
-
-  const [errors, setErrors] = useState(0)
-
-  const [isGameOver, setIsGameOver] = useState(false)
-
-  const [score, setScore] = useState(0)
-
-  const [bestScore, setBestScore] = useState(() => {
-  const savedScore = Number(
-    window.localStorage.getItem('memory-best-score')
+  const [game, dispatch] = useReducer(
+    gameReducer,
+    undefined,
+    createInitialGameState
   )
-  return Number.isFinite(savedScore) ? savedScore : 0
+  const [bestScore, setBestScore] = useState(() => {
+    const savedScore = Number(
+      window.localStorage.getItem('memory-best-score')
+    )
+    return Number.isFinite(savedScore) ? savedScore : 0
   })
 
-  const [isWon, setIsWon] = useState(false)
-
-  const [isLevelComplete, setIsLevelComplete] = useState(false)
-
   const startGame = () => {
-  setCards(shuffleCards(createDeck(1)))
-  setFlippedIds([])
-  setErrors(0)
-  setScore(0)
-  setIsGameOver(false)
-  setIsWon(false)
-  setIsPlaying(true)
-  setLevel(1)
-  setIsLevelComplete(false)
+    dispatch({
+      type: 'START_GAME',
+      cards: shuffleCards(createDeck(1)),
+    })
   }
 
   const nextLevel = () => {
-  const nextLevelNumber = level + 1
-
-  setLevel(nextLevelNumber)
-  setCards(shuffleCards(createDeck(nextLevelNumber)))
-  setFlippedIds([])
-  setErrors(0)
-  setIsLevelComplete(false)
-  }
-
-  const handleCardClick = (clickedCardId) => {
-    const clickedCard = cards.find((card) => card.id === clickedCardId)
-
-    if (
-      !clickedCard ||
-      isGameOver ||
-      isWon ||
-      isLevelComplete ||
-      clickedCard.isMatched ||
-      clickedCard.isFlipped ||
-      flippedIds.length === 2
-    ) {
-      return
-    }
-
-    const nextFlippedIds = [...flippedIds, clickedCardId]
-    const firstCard = cards.find((card) => card.id === flippedIds[0])
-    
-    const isPair = nextFlippedIds.length === 2 && firstCard?.symbol === clickedCard.symbol
-    
-      const completesLevel =
-    isPair &&
-    cards.every(
-      (card) =>
-        card.isMatched ||
-        card.id === clickedCardId ||
-        card.id === flippedIds[0]
-    )  
-      
-        if (isPair) {
-      const bonus = completesLevel ? 50 * (4 - errors) : 0
-      setScore((currentScore) => currentScore + 100 + bonus)
-    }
-
-    if (completesLevel) {
-      if (level === MAX_LEVEL) {
-        setIsWon(true)
-      } else {
-        setIsLevelComplete(true)
-      }
-    }
-
-    // const completesGame =
-    //   isPair &&
-    //   cards.every(
-    //     (card) =>
-    //       card.isMatched ||
-    //       card.id === clickedCardId ||
-    //       card.id === flippedIds[0]
-    //   )
-
-    // if (completesGame) {
-    // //   setIsWon(true)
-    // }
-
-    if (nextFlippedIds.length === 2 && !isPair) {
-    const nextErrors = errors + 1
-    setErrors(nextErrors)
-
-    if (nextErrors >= 4) {
-        setIsGameOver(true)
-      }
-    }
-
-    setCards((currentCards) =>
-      currentCards.map((card) => {
-        const isClickedCard = card.id === clickedCardId
-        const isFirstCardOfPair = isPair && card.id === flippedIds[0]
-
-        if (!isClickedCard && !isFirstCardOfPair) {
-          return card
-        }
-
-        return {
-          ...card,
-          isFlipped: true,
-          ...(isPair ? { isMatched: true } : {}),
-        }
-      })
-    )
-
-    setFlippedIds(isPair ? [] : nextFlippedIds)
+    const nextLevelNumber = game.level + 1
+    dispatch({
+      type: 'NEXT_LEVEL',
+      cards: shuffleCards(createDeck(nextLevelNumber)),
+    })
   }
 
   useEffect(() => {
-    if (flippedIds.length !== 2) {
+    if (game.status !== 'checking') {
       return
     }
 
     const timeoutId = window.setTimeout(() => {
-      setCards((currentCards) =>
-        currentCards.map((card) =>
-          flippedIds.includes(card.id) && !card.isMatched
-            ? { ...card, isFlipped: false }
-            : card
-        )
-      )
-      setFlippedIds([])
+      dispatch({ type: 'HIDE_MISMATCHED_CARDS' })
     }, 900)
-  
+
     return () => window.clearTimeout(timeoutId)
-  }, [flippedIds])
+  }, [game.status])
 
   useEffect(() => {
-  if ((!isGameOver && !isWon) || score <= bestScore) {
-    return
-  }
+    if (
+      !['gameOver', 'won'].includes(game.status) ||
+      game.score <= bestScore
+    ) {
+      return
+    }
 
-  setBestScore(score)
-  window.localStorage.setItem('memory-best-score', String(score))
-}, [isGameOver, isWon, score, bestScore])
+    setBestScore(game.score)
+    window.localStorage.setItem('memory-best-score', String(game.score))
+  }, [game.status, game.score, bestScore])
 
   return (
     <main className="game">
@@ -187,13 +75,19 @@ function App() {
       <button type="button" onClick={startGame}>
         Commencer une partie
       </button>
-      {isPlaying && <p>Niveau : {level} / {MAX_LEVEL}</p>}
-      {isPlaying && <p>Score : {score}</p>}
+      {game.status !== 'idle' && (
+        <>
+          <p>Niveau : {game.level} / {MAX_LEVEL}</p>
+          <p>Score : {game.score}</p>
+          <p>Erreurs : {game.errors} / 4</p>
+        </>
+      )}
       <p>Meilleur score : {bestScore}</p>
-      {isPlaying && <p>Erreurs : {errors} / 4</p>}
-      {isGameOver && <p>Partie terminée !</p>}
-      {isWon && <p>Bravo, tu as trouvé toutes les paires !</p>}
-      {isLevelComplete && (
+      {game.status === 'gameOver' && <p>Partie terminée !</p>}
+      {game.status === 'won' && (
+        <p>Bravo, tu as trouvé toutes les paires !</p>
+      )}
+      {game.status === 'levelComplete' && (
         <div>
           <p>Niveau terminé !</p>
           <button type="button" onClick={nextLevel}>
@@ -201,20 +95,28 @@ function App() {
           </button>
         </div>
       )}
-     {isPlaying && (
+      {game.status !== 'idle' && (
         <section className="board" aria-label="Plateau de jeu">
-          {cards.map((card) => (
-        <button
-          key={card.id}
-          type="button"
-          onClick={() => handleCardClick(card.id)}
-          className={`card ${card.isMatched ? 'card--matched' : ''}`}
-        >
-          {card.isFlipped ? card.symbol : '❓'}
-           </button>
+          {game.cards.map((card) => (
+            <button
+              key={card.id}
+              type="button"
+              onClick={() => dispatch({ type: 'FLIP_CARD', id: card.id })}
+              className={`card ${card.isMatched ? 'card--matched' : ''}`}
+              aria-label={
+                card.isFlipped
+                  ? `Carte ${card.symbol}${card.isMatched ? ', paire trouvée' : ''}`
+                  : 'Carte cachée'
+              }
+              disabled={
+                game.status !== 'playing' || card.isMatched || card.isFlipped
+              }
+            >
+              {card.isFlipped ? card.symbol : '❓'}
+            </button>
           ))}
         </section>
-  )}
+      )}
     </main>
   )
 }
