@@ -2,23 +2,20 @@ import { describe, expect, it } from 'vitest'
 import { createDeck, pairsForLevel } from './levels.js'
 
 describe('pairsForLevel', () => {
-  it('starts with 3 pairs at level 1', () => {
-    expect(pairsForLevel(1)).toBe(3)
+  it('uses the requested pair count for every level', () => {
+    expect(Array.from({ length: 10 }, (_, index) => pairsForLevel(index + 1)))
+      .toEqual([4, 4, 5, 5, 6, 6, 6, 7, 7, 8])
   })
 
-  it('increases to 12 pairs at level 10', () => {
-    expect(pairsForLevel(10)).toBe(12)
-  })
-
-  it('does not exceed the 12-pair limit', () => {
-    expect(pairsForLevel(11)).toBe(12)
+  it('keeps the final level pair count for levels above the game limit', () => {
+    expect(pairsForLevel(11)).toBe(8)
   })
 })
 
 describe('createDeck', () => {
-  it('creates 6 cards at level 1 and 24 at level 10', () => {
-    expect(createDeck(1)).toHaveLength(6)
-    expect(createDeck(10)).toHaveLength(24)
+  it('creates 8 cards at level 1 and 16 at level 10', () => {
+    expect(createDeck(1)).toHaveLength(8)
+    expect(createDeck(10)).toHaveLength(16)
   })
 
   it('creates pairs with unique card IDs', () => {

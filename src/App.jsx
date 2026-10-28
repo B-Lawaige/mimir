@@ -12,9 +12,6 @@ const translations = {
   fr: {
     options: 'Options',
     scores: 'Meilleurs scores',
-    credits: 'Crédits',
-    creditsText: 'Les icônes proviennent de Game-icons.net. Les licences et contributeurs sont détaillés dans icon/license.txt.',
-    audioCredits: 'Les crédits des fichiers audio restent à compléter avec leur source, leur auteur et leur licence.',
     start: 'Commencer le jeu',
     best: 'Meilleur score',
     back: 'Retour au menu',
@@ -28,6 +25,8 @@ const translations = {
     errors: 'Erreurs',
     gameOver: 'Partie terminée',
     won: 'Victoire ! Tu as trouvé toutes les paires.',
+    thanks: 'Merci d’avoir joué à MIMIR !',
+    newRecord: 'Nouveau meilleur score !',
     levelComplete: 'Niveau terminé !',
     nextLevel: 'Niveau suivant',
     continue: 'Continuer',
@@ -45,9 +44,6 @@ const translations = {
   en: {
     options: 'Options',
     scores: 'High scores',
-    credits: 'Credits',
-    creditsText: 'Icons are from Game-icons.net. Licenses and contributors are listed in icon/license.txt.',
-    audioCredits: 'Audio credits still need to include each source, author, and license.',
     start: 'Start game',
     best: 'Best score',
     back: 'Back to menu',
@@ -61,6 +57,8 @@ const translations = {
     errors: 'Mistakes',
     gameOver: 'Game over',
     won: 'Victory! You found every pair.',
+    thanks: 'Thank you for playing MIMIR!',
+    newRecord: 'New high score!',
     levelComplete: 'Level complete!',
     nextLevel: 'Next level',
     continue: 'Continue',
@@ -131,6 +129,7 @@ function App() {
   })
   const [settings, setSettings] = useState(readSettings)
   const [screen, setScreen] = useState('menu')
+  const [recordNotification, setRecordNotification] = useState(false)
   const [viewport, setViewport] = useState(() => ({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -142,6 +141,8 @@ function App() {
     isMuted,
   })
   const previousGameRef = useRef(game)
+  const startingBestScoreRef = useRef(bestScore)
+  const recordNotificationShownRef = useRef(false)
   const t = translations[settings.language]
   const boardLayout = getBoardLayout(game.cards.length, viewport)
   const updateSettings = (updates) => {
@@ -153,6 +154,9 @@ function App() {
   }
 
   const startGame = () => {
+    startingBestScoreRef.current = bestScore
+    recordNotificationShownRef.current = false
+    setRecordNotification(false)
     startAmbience()
     dispatch({
       type: 'START_GAME',
@@ -256,16 +260,32 @@ function App() {
 
 
   useEffect(() => {
-    if (
-      !['gameOver', 'won'].includes(game.status) ||
-      game.score <= bestScore
-    ) {
+    if (game.score <= bestScore) {
       return
+    }
+
+    if (
+      startingBestScoreRef.current > 0 &&
+      game.score > startingBestScoreRef.current &&
+      !recordNotificationShownRef.current
+    ) {
+      recordNotificationShownRef.current = true
+      setRecordNotification(true)
     }
 
     setBestScore(game.score)
     window.localStorage.setItem('memory-best-score', String(game.score))
   }, [game.status, game.score, bestScore])
+
+  useEffect(() => {
+    if (!recordNotification) return
+
+    const timeoutId = window.setTimeout(() => {
+      setRecordNotification(false)
+    }, 3000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [recordNotification])
 
   useEffect(() => {
     const previousGame = previousGameRef.current
@@ -291,13 +311,11 @@ function App() {
     <main className={`mimir-app ${screen === 'game' ? 'mimir-app--game' : ''}`}>
       {screen === 'menu' && (
         <Menu
-          bestScore={bestScore}
           labels={t}
           onStart={startGame}
           onMenuAction={() => playEffect('menu')}
           onOptions={() => setScreen('options')}
           onScores={() => setScreen('scores')}
-          onCredits={() => setScreen('credits')}
         />
       )}
 
@@ -359,18 +377,6 @@ function App() {
           <p className="eyebrow">MIMIR</p>
           <h1 id="scores-title">{t.scores}</h1>
           <p className="score-display">{bestScore}</p>
-          <button className="back-button" type="button" onClick={() => setScreen('menu')}>
-            {t.back}
-          </button>
-        </section>
-      )}
-
-      {screen === 'credits' && (
-        <section className="secondary-panel" aria-labelledby="credits-title">
-          <p className="eyebrow">MIMIR</p>
-          <h1 id="credits-title">{t.credits}</h1>
-          <p>{t.creditsText}</p>
-          <p>{t.audioCredits}</p>
           <button className="back-button" type="button" onClick={() => setScreen('menu')}>
             {t.back}
           </button>
@@ -446,6 +452,7 @@ function App() {
               aria-label={t.instructions}
               style={{
                 '--board-columns': boardLayout.columns,
+                '--board-rows': boardLayout.rows,
                 '--card-size': `${boardLayout.cardSize}px`,
                 '--card-gap': `${boardLayout.gap}px`,
               }}
@@ -481,7 +488,9 @@ function App() {
               ))}
             </section>
           )}
-          <p className="game-best-score">{t.best}: {bestScore}</p>
+          {bestScore > 0 && (
+            <p className="game-best-score">{t.best}: {bestScore}</p>
+          )}
         </section>
       )}
 
@@ -497,6 +506,7 @@ function App() {
             <h2 id="end-dialog-title">
               {game.status === 'won' ? t.won : t.gameOver}
             </h2>
+            {game.status === 'won' && <p>{t.thanks}</p>}
             <p>{t.score}: {game.score}</p>
             <button className="back-button" type="button" onClick={startGame}>
               {t.replay}
@@ -506,6 +516,11 @@ function App() {
             </button>
           </section>
         </div>
+      )}
+      {recordNotification && (
+        <p className="record-notification" role="status" aria-live="polite">
+          {t.newRecord}
+        </p>
       )}
       {audioError && <p className="audio-error" role="status">{audioError}</p>}
     </main>

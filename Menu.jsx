@@ -2,14 +2,12 @@ import { useRef } from 'react';
 import './Menu.css';
 
 export default function Menu({
-  bestScore = 0,
   labels,
   onStart,
   onUserInteraction,
   onMenuAction,
   onOptions,
   onScores,
-  onCredits,
 }) {
   const menuButtons = useRef([]);
 
@@ -49,10 +47,7 @@ export default function Menu({
         <button ref={(element) => { menuButtons.current[0] = element }} type="button" onClick={() => runMenuAction(onStart)}>{labels?.start ?? 'Commencer le jeu'}</button>
         <button ref={(element) => { menuButtons.current[1] = element }} type="button" onClick={() => runMenuAction(onOptions)}>{labels?.options ?? 'Options'}</button>
         <button ref={(element) => { menuButtons.current[2] = element }} type="button" onClick={() => runMenuAction(onScores)}>{labels?.scores ?? 'Meilleurs scores'}</button>
-        <button ref={(element) => { menuButtons.current[3] = element }} type="button" onClick={() => runMenuAction(onCredits)}>{labels?.credits ?? 'Crédits'}</button>
       </nav>
-
-      <p className="menu__best">{labels?.best ?? 'Meilleur score'} : {bestScore}</p>
     </main>
   );
 }

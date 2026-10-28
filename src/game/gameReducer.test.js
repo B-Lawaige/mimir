@@ -138,7 +138,7 @@ describe('gameReducer', () => {
     const completed = completeLevel(startGame())
 
     expect(completed.status).toBe('levelComplete')
-    expect(completed.score).toBe(3 * POINTS_PER_PAIR + 4 * 50)
+    expect(completed.score).toBe(4 * POINTS_PER_PAIR + 4 * 50)
 
     const nextLevel = advanceLevel(completed)
     expect(nextLevel.status).toBe('playing')

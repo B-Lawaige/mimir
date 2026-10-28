@@ -11,7 +11,7 @@ const icons = Object.entries(iconModules).map(([path, src]) => ({
 }))
 
 export const MAX_LEVEL = 10
-const MAX_PAIRS = 12
+const PAIRS_PER_LEVEL = [4, 4, 5, 5, 6, 6, 6, 7, 7, 8]
 
 function chooseRandomIcons(count) {
   const shuffledIcons = [...icons]
@@ -28,7 +28,8 @@ function chooseRandomIcons(count) {
 }
 
 export function pairsForLevel(level) {
-  return Math.min(3 + level - 1, MAX_PAIRS)
+  const levelIndex = Math.min(Math.max(Math.floor(level) - 1, 0), MAX_LEVEL - 1)
+  return PAIRS_PER_LEVEL[levelIndex]
 }
 
 export function createDeck(level) {

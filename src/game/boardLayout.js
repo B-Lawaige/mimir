@@ -1,42 +1,46 @@
+const MAX_CARD_SIZE = 200
+const PREFERRED_MIN_CARD_SIZE = 90
+
 export function getBoardLayout(cardCount, viewport) {
-  const gap = Math.min(12, Math.max(6, viewport.width * 0.012))
-  const cardSize = Math.max(
-    46,
-    Math.min(100, viewport.width * 0.09, viewport.height * 0.1)
-  )
+  const gap = Math.min(16, Math.max(8, viewport.width * 0.012))
 
   if (!cardCount) {
-    return { columns: 0, cardSize, gap }
+    return { columns: 0, rows: 0, cardSize: PREFERRED_MIN_CARD_SIZE, gap }
   }
 
-  const availableWidth = viewport.width - 24
-  const availableHeight = viewport.height - 220
-  const maxColumns = Math.max(
-    1,
-    Math.floor((availableWidth + gap) / (cardSize + gap))
-  )
-  const maxRows = Math.max(
-    1,
-    Math.floor((availableHeight + gap) / (cardSize + gap))
-  )
-  const targetRatio = availableWidth / Math.max(1, availableHeight)
-  const columns = Array.from({ length: cardCount }, (_, index) => index + 1)
-    .filter((count) => cardCount % count === 0)
-    .reduce((bestColumns, count) => {
-      const rows = cardCount / count
-      const overflow =
-        Math.max(0, count - maxColumns) + Math.max(0, rows - maxRows)
-      const ratioDifference = Math.abs(Math.log(count / rows / targetRatio))
-      const score = ratioDifference + overflow * 4
-      const bestRows = cardCount / bestColumns
-      const bestOverflow =
-        Math.max(0, bestColumns - maxColumns) + Math.max(0, bestRows - maxRows)
-      const bestScore =
-        Math.abs(Math.log(bestColumns / bestRows / targetRatio)) +
-        bestOverflow * 4
+  const availableWidth = Math.max(240, viewport.width - 48)
+  const availableHeight = Math.max(160, viewport.height - 230)
+  const targetRatio = availableWidth / availableHeight
+  const layouts = Array.from({ length: cardCount }, (_, index) => index + 1)
+    .filter((columns) => cardCount % columns === 0)
+    .map((columns) => {
+      const rows = cardCount / columns
+      const widthPerCard =
+        (availableWidth - gap * (columns - 1)) / columns
+      const heightPerCard = (availableHeight - gap * (rows - 1)) / rows
+      const cardSize = Math.max(
+        46,
+        Math.min(
+          MAX_CARD_SIZE,
+          widthPerCard,
+          Math.max(PREFERRED_MIN_CARD_SIZE, heightPerCard)
+        )
+      )
 
-      return score < bestScore ? count : bestColumns
-    }, 1)
+      return {
+        columns,
+        rows,
+        cardSize,
+        ratioDifference: Math.abs(Math.log(columns / rows / targetRatio)),
+      }
+    })
 
-  return { columns, cardSize, gap }
+  const bestSize = Math.max(...layouts.map((layout) => layout.cardSize))
+  const bestLayout = layouts
+    .filter((layout) => layout.cardSize >= bestSize - 1)
+    .reduce((best, layout) =>
+      layout.ratioDifference < best.ratioDifference ? layout : best
+    )
+
+  return { ...bestLayout, gap: Math.round(gap) }
 }

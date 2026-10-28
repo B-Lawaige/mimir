@@ -250,7 +250,7 @@
 .board {
   display: grid;
   grid-template-columns: repeat(var(--board-columns), var(--card-size));
-  grid-auto-rows: var(--card-size);
+  grid-template-rows: repeat(var(--board-rows), var(--card-size));
   align-content: center;
   justify-content: center;
   gap: var(--card-gap);
@@ -258,6 +258,7 @@
   min-height: 0;
   flex: 1;
   margin: 0 auto;
+  padding-block: 0.5rem;
 }
 
 .card {
@@ -273,7 +274,7 @@
   box-shadow: inset 0 0 1rem #c6d5e00d, 0 0 0.8rem #94b5df0c;
   color: #e7d28e;
   cursor: pointer;
-  font-size: clamp(1.5rem, 6vw, 2.5rem);
+  font-size: clamp(2rem, 6vw, 3rem);
   transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
 }
 
@@ -316,6 +317,34 @@
   background: #28151df2;
   color: #ffe3e3;
   text-align: center;
+}
+
+.record-notification {
+  position: fixed;
+  top: 1.25rem;
+  left: 50%;
+  z-index: 4;
+  margin: 0;
+  padding: 0.85rem 1.4rem;
+  transform: translateX(-50%);
+  border: 1px solid #d7bd70;
+  border-radius: 0.5rem;
+  background: #101e34f2;
+  box-shadow: 0 0 1.5rem #d7bd7040;
+  color: #f0dfaa;
+  text-align: center;
+  animation: record-notification-in 220ms ease-out;
+}
+
+@keyframes record-notification-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 .setting-row {
